@@ -1,0 +1,7 @@
+ollama_api:
+  api_url: "http://127.0.0.1:11434/v1/completions"
+  model_name: "llama3.3:70b-instruct-q4_K_M"
+  default_temperature: 0.7
+  default_max_tokens: 100
+  default_top_p: 1.0
+  default_frequency_penalty: 0.0
