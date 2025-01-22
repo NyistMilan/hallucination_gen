@@ -1,12 +1,23 @@
 import click
 import pandas as pd
 from datasets import load_dataset
-from hallucinationGen.strategies.entity_swap import EntitySwap
-from hallucinationGen.strategies.number_swap import NumberSwap
-from hallucinationGen.strategies.negation import Negation
-from hallucinationGen.strategies.pronoun_swap import PronounSwap
-from hallucinationGen.strategies.strategy_manager import StrategyManager
+import asyncio
+from hallucination_gen.strategies.entity_swap import EntitySwap
+from hallucination_gen.strategies.number_swap import NumberSwap
+from hallucination_gen.strategies.negation import Negation
+from hallucination_gen.strategies.pronoun_swap import PronounSwap
+from hallucination_gen.strategies.strategy_manager import StrategyManager
 
+async def apply_transformations_to_documents(manager: StrategyManager, documents) -> list:
+    rows = []
+    for doc in documents:
+        source_document = doc["document"]
+        claim = doc["summary"]
+
+        transformations = await manager.apply_transformations_async(source_document, claim)
+        rows.extend(transformations)
+
+    return rows
 
 @click.command()
 @click.option("--dataset_name", default="EdinburghNLP/xsum", help="The name of the dataset to load.")
@@ -15,24 +26,14 @@ from hallucinationGen.strategies.strategy_manager import StrategyManager
 def generate_hallucination_dataset(dataset_name, output_file, num_samples):
     dataset = load_dataset(dataset_name)
     documents = dataset["train"].select(range(num_samples))
-    print(documents)
 
     strategies = [EntitySwap(), NumberSwap(), Negation(), PronounSwap()]
     manager = StrategyManager(strategies)
 
-    rows = []
-    for doc in documents:
-        print(doc)
-        source_document = doc["document"]
-        claim = doc["summary"]
-
-        transformations = manager.apply_transformations(source_document, claim)
-        rows.extend(transformations)
-
+    rows = asyncio.run(apply_transformations_to_documents(manager, documents))
     df = pd.DataFrame(rows)
     df.to_csv(output_file, index=False)
     click.echo(f"Dataset saved to {output_file}")
-
 
 if __name__ == "__main__":
     generate_hallucination_dataset()
