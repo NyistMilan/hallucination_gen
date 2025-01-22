@@ -1,12 +1,13 @@
-from hallucinationGen.api.ollama_api import OllamaAPI
-from hallucinationGen.strategies.base_strategy import BaseStrategy
+from typing import Dict
+from hallucination_gen.api.ollama_api import OllamaAPI
+from hallucination_gen.strategies.base_strategy import BaseStrategy
 
 
 class Negation(BaseStrategy):
     def __init__(self):
         self.api_client = OllamaAPI()
 
-    def apply(self, source_document, claim):
+    async def apply_async(self, source_document: str, claim: str) -> Dict[str, str]:
         prompt = self.api_client.construct_prompt(
             """Here is a source document:
             {source_document}
@@ -19,11 +20,10 @@ class Negation(BaseStrategy):
             claim=claim,
         )
         system_prompt = "You are an assistant that manipulates negation in summaries to create unfaithful claims."
-        transformed_claim = self.api_client.send_prompt(
+        transformed_claim = await self.api_client.send_prompt_async(
             prompt=prompt,
             system_prompt=system_prompt,
         )
-
         claim_location = (source_document.find(claim), source_document.find(claim) + len(claim))
         transformation_location = (transformed_claim.find(claim), transformed_claim.find(claim) + len(claim))
 

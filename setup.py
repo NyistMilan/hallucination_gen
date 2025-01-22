@@ -20,5 +20,6 @@ setup(
         'aiohttp~=3.9.5',
         'tqdm~=4.66.2',
         'huggingface-hub~=0.26.2',
+        'ollama-python'
     ]
 )
